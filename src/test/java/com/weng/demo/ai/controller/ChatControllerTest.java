@@ -4,26 +4,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Generation;
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.ollama.OllamaChatModel;
+
+import com.weng.demo.ai.service.ChatService;
 
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 public class ChatControllerTest {
     @Mock
-    private OllamaChatModel chatModel;
+    private ChatService chatService;
 
     @InjectMocks
     private ChatController chatController;
@@ -38,7 +32,7 @@ public class ChatControllerTest {
         String message = "Hello, world!";
         String expectedResponse = "Hi there!";
 
-        when(chatModel.call(message)).thenReturn(expectedResponse);
+        when(chatService.chat(message)).thenReturn(expectedResponse);
 
         String response = chatController.chat(message);
 
@@ -50,7 +44,7 @@ public class ChatControllerTest {
         String message = "";
         String expectedResponse = "Please provide a message.";
 
-        when(chatModel.call(message)).thenReturn(expectedResponse);
+        when(chatService.chat(message)).thenReturn(expectedResponse);
 
         String response = chatController.chat(message);
 
@@ -61,11 +55,7 @@ public class ChatControllerTest {
     public void testChatWithStream() {
         String message = "Hello, world!";
         String expectedResponse = "Hi there!";
-
-        ChatResponse chatResponse = new ChatResponse(Collections.singletonList(new Generation(new AssistantMessage(
-                expectedResponse))));
-
-        when(chatModel.stream(any(Prompt.class))).thenReturn(Flux.just(chatResponse));
+        when(chatService.streamableChat(any(String.class))).thenReturn(Flux.just(expectedResponse));
 
         Flux<String> responseFlux = chatController.chatWithStream(message);
 
@@ -79,9 +69,7 @@ public class ChatControllerTest {
         String message = "";
         String expectedResponse = "Please provide a message.";
 
-        ChatResponse chatResponse = new ChatResponse(Collections.singletonList(new Generation(new AssistantMessage(
-                expectedResponse))));
-        when(chatModel.stream(any(Prompt.class))).thenReturn(Flux.just(chatResponse));
+        when(chatService.streamableChat(any(String.class))).thenReturn(Flux.just(expectedResponse));
 
         Flux<String> responseFlux = chatController.chatWithStream(message);
 
@@ -95,12 +83,7 @@ public class ChatControllerTest {
         String message = "Hello, world!";
         String expectedResponse1 = "Hi there!";
         String expectedResponse2 = "How can I help you?";
-
-        ChatResponse chatResponse1 = new ChatResponse(Collections.singletonList(new Generation(new AssistantMessage(
-                expectedResponse1))));
-        ChatResponse chatResponse2 = new ChatResponse(Collections.singletonList(new Generation(new AssistantMessage(
-                expectedResponse2))));
-        when(chatModel.stream(any(Prompt.class))).thenReturn(Flux.just(chatResponse1, chatResponse2));
+        when(chatService.streamableChat(any(String.class))).thenReturn(Flux.just(expectedResponse1, expectedResponse2));
 
         Flux<String> responseFlux = chatController.chatWithStream(message);
 
@@ -114,9 +97,7 @@ public class ChatControllerTest {
     public void testChatWithStreamNoResponse() {
         String message = "Hello, world!";
 
-        Prompt prompt = new Prompt(new UserMessage(message));
-
-        when(chatModel.stream(any(Prompt.class))).thenReturn(Flux.empty());
+        when(chatService.streamableChat(any(String.class))).thenReturn(Flux.empty());
 
         Flux<String> responseFlux = chatController.chatWithStream(message);
 
